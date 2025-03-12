@@ -1,55 +1,49 @@
 import streamlit as st
 import tensorflow as tf
-import numpy as np
+import numpy as np 
 import gdown
 import os
-from PIL import Image
 
-# Define model path
-model_path = 'trained_plant_disease_model.keras'
+file_id="1_1--SDtd_id0vlY6aRS0sSUnZf5x7lqXOE"
+url="https://drive.google.com/file/d/1--SDtd_id0vlY6aRS0sSUnZf5x7lqXOE/view?usp=sharing"
+model_path='trained_plant_disease_model.keras'
 
-# Google Drive file ID for downloading the model (replace with actual file ID)
-file_id = "YOUR_FILE_ID"
-url = f"https://drive.google.com/uc?id={file_id}"
-
-# Download the model if it does not exist
 if not os.path.exists(model_path):
-    st.warning("Downloading the model file. Please wait...")
-    gdown.download(url, model_path, quiet=False)
+    st.warning('Downloading mmodel from googel drive...')
+    gdown.download(url,model_path)
 
-# Load the trained model
-model = tf.keras.models.load_model(model_path)
 
-# Function to predict the disease from an image
+
 def model_prediction(test_image):
-    # Open image and preprocess
-    image = Image.open(test_image)
-    image = image.resize((128, 128))  # Resize to match model input shape
-    input_arr = np.array(image) / 255.0  # Normalize pixel values
-    input_arr = np.expand_dims(input_arr, axis=0)  # Add batch dimension
+    model=tf.keras.models.load_model(model_path)
+    image=tf.keras.preprocessing.image.load_img(test_image,target_size=(128,128))
+    input_arr=tf.keras.preprocessing.image.img_to_array(image)
+    input_arr= np.array([input_arr])
+    predictions= model.predict(input_arr)
+    return np.argmax(predictions)
 
-    # Make prediction
-    predictions = model.predict(input_arr)
-    return np.argmax(predictions)  # Return the predicted class index
+st.sidebar.title('PLANT DisEASE DETECTION SYSTEM')
+app_mode= st.sidebar.selectbox("Select Page",['HOME',"DISEASE RECOGNITION"])
 
-# Streamlit UI
-st.sidebar.title("PLANT DISEASE DETECTION SYSTEM")
-app_mode = st.sidebar.selectbox("Select page", ["Home", "DISEASE RECOGNITION"])
+if(app_mode=="HOME"):
+    st.markdown("<h1 style='text-align: center;'>Plant Disease Detection System for Sustainable Agriculture", unsafe_allow_html=True)
 
-if app_mode == "Home":
-    st.markdown("<h1 style='text-align: center; color: red;'>PLANT DISEASE DETECTION SYSTEM</h1>", unsafe_allow_html=True)
+elif(app_mode=="DISEASE RECOGNITION"):
+    st.header('Plant disease detection')
+    test_image=st.file_uploader('Choose an image:')
+    if(st.button("Show Image")):
+        st.image(test_image,width=4,use_column_width=True)
+    #Predict button
+    if(st.button("Predict")):
+        st.snow()
+        st.write("Our Prediction")
+        result_index = model_prediction(test_image)
+        #Reading Labels
+        class_name = ['Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy']
+        st.success("Model is Predicting it's a {}".format(class_name[result_index]))
 
-elif app_mode == "DISEASE RECOGNITION":
-    st.header('Plant Disease Detection')
-    test_image = st.file_uploader('Choose an image:', type=['jpg', 'png', 'jpeg'])
 
-    if test_image:
-        st.image(test_image, use_column_width=True)
 
-        if st.button("Predict"):
-            st.snow()
-            result_index = model_prediction(test_image)
 
-            # Define class names
-            class_names = ['Potato Early Blight', 'Potato Late Blight', 'Healthy Potato']
-            st.success(f"Model is predicting: {class_names[result_index]}")
+
+
